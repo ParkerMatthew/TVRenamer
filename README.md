@@ -6,6 +6,7 @@ Current Features:
 
 1. Automatically remove "junk text" that commonly appear within file names of video files
 2. Automatically combine single episodes into folders labeled "Season X" and organize those folders into a folder labeled "Show_Name"
+
   a. The season number and title of the series is automatically detected
 3. Allow for editing of .mkv file meta-tags so that the title of the episode does not retain the junk text of the original file name.
 
