@@ -1,0 +1,15 @@
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\bin\Debug\File Manager.exe.config
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\bin\Debug\File Manager.exe.manifest
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\bin\Debug\File Manager.application
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\bin\Debug\File Manager.exe
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\bin\Debug\File Manager.pdb
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Debug\File_Manager.MessageBoxWithCheckbox.resources
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Debug\File_Manager.MainForm.resources
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Debug\File_Manager.Properties.Resources.resources
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Debug\File_Manager.SettingsForm.resources
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Debug\RikTheVeggie.TriStateTreeView.resources
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Debug\File Manager.csproj.GenerateResource.Cache
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Debug\File Manager.exe.manifest
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Debug\File Manager.application
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Debug\File Manager.exe
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Debug\File Manager.pdb

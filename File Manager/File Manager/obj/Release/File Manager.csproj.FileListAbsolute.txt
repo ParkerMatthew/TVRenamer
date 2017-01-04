@@ -1,0 +1,17 @@
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\bin\Release\File Manager.exe.config
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\bin\Release\File Manager.exe.manifest
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\bin\Release\File Manager.application
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\bin\Release\File Manager.exe
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\bin\Release\File Manager.pdb
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File_Manager.MessageBoxWithCheckbox.resources
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File_Manager.MainForm.resources
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File_Manager.Properties.Resources.resources
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File_Manager.SettingsForm.resources
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\RikTheVeggie.TriStateTreeView.resources
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File Manager.csproj.GenerateResource.Cache
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File Manager.exe.manifest
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File Manager.application
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File Manager.exe
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File Manager.pdb
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File Manager.csprojResolveAssemblyReference.cache
+T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File_Manager.MKVPropEdit.resources
