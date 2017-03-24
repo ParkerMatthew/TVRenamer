@@ -42,14 +42,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="File Manager.exe" size="102864">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="File Manager.exe" size="113616">
       <assemblyIdentity name="File Manager" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>w7fb6Li/Aanq9WBDnw+GUdPh3bk3nRrklSBAca+kkAg=</dsig:DigestValue>
+        <dsig:DigestValue>E7Mh8jnNl7WfMNZOwgVUi6ZongAZnLLVoyVJgABWB6g=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

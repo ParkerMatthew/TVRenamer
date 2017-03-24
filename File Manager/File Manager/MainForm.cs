@@ -1627,13 +1627,18 @@ namespace File_Manager {
             [0] is for double episodes, such as S1E1E2, S01E01&E02, or Season 1 Episode 1 and 1
             [1] is for common episodes1, such as S01E01 or ep101
             [2] is for common episodes2, such as Season 01 Episode 01
-            [3] is for common episodes3, such as 101, 1x01, 01, 01.01
+            [3] is for common episodes3, such as 1x01, 01.01
+            [4] is for common episodes4, such as Ep 01 or episode 1
+            [5] is for common episodes5, such as 101, 01
+            
             */
-            string[] episodeFormats = new string[4] {
+            string[] episodeFormats = new string[6] {
                 @"((S|s)([EASONeason])*( |\.|-|_)?)?\d+([A-Z]|[a-z]| |\.|-|_)+\d+((([A-Z]|[a-z]| |\.|-|_|&|\+){1,3})|([ _\.\-ANDand]{3,5}))(e|E|x|X)?\d+",
                 @"(S|s|E|e)([A-Z]|[a-z])?\d+([A-Z]|[a-z]| |\.|-|_){0,3}\d+",
                 @"(S|s)(E|e)(a|A)(s|S)(o|O)(n|N)(| |\.|-|_)?\d+([A-Z]|[a-z]| |\.|-|_)*\d+",
-                @"\d{1,2}([A-Z]|[a-z]|\.)?\d{1,2}"
+                @"\d{1,2}([A-Z]|[a-z]|\.)\d{1,2}",
+                @"([e|E][p|P][a-z]*[A-Z]*[ |\-|\.|_]?)?\d+",
+                @"\d{1,3}"
             };
             for (int i = 0; i < episodeFormats.Length; i++) {
                 rgx = new Regex(episodeFormats[i]);

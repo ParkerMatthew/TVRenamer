@@ -42,6 +42,7 @@
             this.findNextToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.settingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.mKVDeleteTitlesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -87,6 +88,8 @@
             this.tableLayoutPanel_TopUI = new System.Windows.Forms.TableLayoutPanel();
             this.tableLayoutPanel_bottomUI = new System.Windows.Forms.TableLayoutPanel();
             this.splitContainer_TreeViews = new System.Windows.Forms.SplitContainer();
+            this.treeView1 = new RikTheVeggie.TriStateTreeView();
+            this.treeView2 = new RikTheVeggie.TriStateTreeView();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
             this.labelRegex = new System.Windows.Forms.Label();
@@ -99,9 +102,6 @@
             this.labelReplace = new System.Windows.Forms.Label();
             this.checkBoxReplace = new System.Windows.Forms.CheckBox();
             this.tableLayoutPanel_FindReplace = new System.Windows.Forms.TableLayoutPanel();
-            this.mKVDeleteTitlesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.treeView1 = new RikTheVeggie.TriStateTreeView();
-            this.treeView2 = new RikTheVeggie.TriStateTreeView();
             this.menuStrip1.SuspendLayout();
             this.contextMenuStripNode.SuspendLayout();
             this.panelFormats.SuspendLayout();
@@ -236,6 +236,13 @@
             this.settingToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
             this.settingToolStripMenuItem.Text = "Settings";
             this.settingToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
+            // 
+            // mKVDeleteTitlesToolStripMenuItem
+            // 
+            this.mKVDeleteTitlesToolStripMenuItem.Name = "mKVDeleteTitlesToolStripMenuItem";
+            this.mKVDeleteTitlesToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
+            this.mKVDeleteTitlesToolStripMenuItem.Text = "MKV Property Editor";
+            this.mKVDeleteTitlesToolStripMenuItem.Click += new System.EventHandler(this.mKVDeleteTitlesToolStripMenuItem_Click);
             // 
             // helpToolStripMenuItem
             // 
@@ -768,6 +775,24 @@
             this.splitContainer_TreeViews.SplitterDistance = 347;
             this.splitContainer_TreeViews.TabIndex = 1;
             // 
+            // treeView1
+            // 
+            this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeView1.Location = new System.Drawing.Point(0, 0);
+            this.treeView1.Name = "treeView1";
+            this.treeView1.Size = new System.Drawing.Size(347, 238);
+            this.treeView1.TabIndex = 11;
+            this.treeView1.TriStateStyleProperty = RikTheVeggie.TriStateTreeView.TriStateStyles.Standard;
+            // 
+            // treeView2
+            // 
+            this.treeView2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeView2.Location = new System.Drawing.Point(0, 0);
+            this.treeView2.Name = "treeView2";
+            this.treeView2.Size = new System.Drawing.Size(348, 238);
+            this.treeView2.TabIndex = 12;
+            this.treeView2.TriStateStyleProperty = RikTheVeggie.TriStateTreeView.TriStateStyles.Standard;
+            // 
             // tableLayoutPanel2
             // 
             this.tableLayoutPanel2.ColumnCount = 3;
@@ -911,31 +936,6 @@
             this.tableLayoutPanel_FindReplace.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel_FindReplace.Size = new System.Drawing.Size(301, 39);
             this.tableLayoutPanel_FindReplace.TabIndex = 16;
-            // 
-            // mKVDeleteTitlesToolStripMenuItem
-            // 
-            this.mKVDeleteTitlesToolStripMenuItem.Name = "mKVDeleteTitlesToolStripMenuItem";
-            this.mKVDeleteTitlesToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
-            this.mKVDeleteTitlesToolStripMenuItem.Text = "MKV Property Editor";
-            this.mKVDeleteTitlesToolStripMenuItem.Click += new System.EventHandler(this.mKVDeleteTitlesToolStripMenuItem_Click);
-            // 
-            // treeView1
-            // 
-            this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeView1.Location = new System.Drawing.Point(0, 0);
-            this.treeView1.Name = "treeView1";
-            this.treeView1.Size = new System.Drawing.Size(347, 238);
-            this.treeView1.TabIndex = 11;
-            this.treeView1.TriStateStyleProperty = RikTheVeggie.TriStateTreeView.TriStateStyles.Standard;
-            // 
-            // treeView2
-            // 
-            this.treeView2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeView2.Location = new System.Drawing.Point(0, 0);
-            this.treeView2.Name = "treeView2";
-            this.treeView2.Size = new System.Drawing.Size(348, 238);
-            this.treeView2.TabIndex = 12;
-            this.treeView2.TriStateStyleProperty = RikTheVeggie.TriStateTreeView.TriStateStyles.Standard;
             // 
             // MainForm
             // 
