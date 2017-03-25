@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using System.Text.RegularExpressions;
 using System.IO;
 using System.Threading;
+using System.Globalization;
 
 namespace File_Manager {
     public partial class MainForm : Form {
@@ -27,7 +28,9 @@ namespace File_Manager {
         string editNodeFileType;
         string installPath;
         bool formLostFocus;
-        
+        private bool preventExpandCollapse;
+        private DateTime lastMouseDown;
+
         #endregion
 
         public MainForm() {
@@ -114,6 +117,8 @@ namespace File_Manager {
             openFolder.FileName = "Select Folder";
             treeView2.LabelEdit = true;
             editingNode = false;
+            preventExpandCollapse = false;
+            lastMouseDown = DateTime.Now;
             SetEventListeners();
             setToolTips();
         }
@@ -133,6 +138,11 @@ namespace File_Manager {
             treeView2.AfterCheck += TreeView2_AfterCheck;
             treeView2.AfterSelect += TreeView2_AfterSelect;
             treeView1.AfterSelect += TreeView1_AfterSelect;
+
+            treeView2.MouseDown += TreeView2_MouseDown;
+            treeView2.BeforeExpand += TreeView2_BeforeExpand;
+            treeView2.BeforeCollapse += TreeView2_BeforeCollapse;
+
             textBoxFind.LostFocus += TextBoxFind_LostFocus;
             textBoxReplace.LostFocus += TextBoxReplace_LostFocus;
             treeView2.NodeMouseClick += (sender, args) => treeView2.SelectedNode = args.Node;
@@ -140,6 +150,8 @@ namespace File_Manager {
             labelReplace.MouseClick += LabelReplace_MouseClick;
             QuickSettingsAddListeners();
         }
+
+        
 
         private void MainForm_Deactivate(object sender, EventArgs e) {
             treeView1.MouseEnter -= TreeView1_MouseEnter;
@@ -469,11 +481,21 @@ namespace File_Manager {
                 treeView2.SelectedNode.EndEdit(false);
                 if (!forward) {
                     //shift is being held
-                    treeView2.SelectedNode = treeView2.SelectedNode.PrevNode;
-                    EditTree2Node();
+                    if (treeView2.SelectedNode.PrevVisibleNode != null) {
+                        treeView2.SelectedNode = treeView2.SelectedNode.PrevVisibleNode;
+                        EditTree2Node();
+                    } else {
+                        treeView2.SelectedNode = treeView2.SelectedNode.LastNode;
+                        EditTree2Node();
+                    }
                 } else {
-                    treeView2.SelectedNode = treeView2.SelectedNode.NextNode;
-                    EditTree2Node();
+                    if (treeView2.SelectedNode.NextVisibleNode != null) {
+                        treeView2.SelectedNode = treeView2.SelectedNode.NextVisibleNode;
+                        EditTree2Node();
+                    } else {
+                        treeView2.SelectedNode = treeView2.SelectedNode.FirstNode;
+                        EditTree2Node();
+                    }
                 }
                 return true;
             } else
@@ -631,26 +653,27 @@ namespace File_Manager {
         private void buttonApplyAll_Click(object sender, EventArgs e) {
             if (treeView2.Nodes.Count > 0)
                 ApplyAll();
+            reOpenFolder();
         }
 
         private void ApplyAll() {
             if (!directory.EndsWith("\\"))
                 directory += "\\";
             string rootDirectory = directory.Remove(directory.LastIndexOf(treeView2.Nodes[0].Text + "\\"), treeView2.Nodes[0].Text.Length + 1);
-            string[] directories = FindNewDirectories(treeView1, treeView2.Nodes);
+            //string[] directories = FindNewDirectories(treeView1, treeView2.Nodes);
             string[] deletions = FindDeletedNodes(treeView1.Nodes, treeView2);
             if (!ApplyDeletesConfirm(deletions))
                 return;
-            if (!ApplyCreateNewDirectories(directories))
-                return;
+            //if (!ApplyCreateNewDirectories(directories))
+            //    return;
+            //Renames require folder names to be unchanged
             if (!ApplyRenamesFiles(treeView2.Nodes, rootDirectory))
                 return;
+            //Deletions require folder names to be unchanged
             if (!ApplyDeletes(deletions))
                 return;
             if (!ApplyRenamesFolders(treeView2.Nodes, rootDirectory))
                 return;
-            reOpenFolder();
-            
         }
 
         private bool ApplyDeletes(string[] deletions) {
@@ -679,8 +702,7 @@ namespace File_Manager {
                 MessageBox.Show(newDirectory + "\r\nDoes not end in \\");
                 return false;
             }
-            //ignore files
-            //ignore unchecked and unchanged files
+            //ignore files and folders that aren't changed and checked
             bool booly = true;
             foreach (TreeNode node in tv2nodes) {
                 if (node.Nodes.Count > 0) {
@@ -712,7 +734,8 @@ namespace File_Manager {
                     booly &= ApplyRenamesFiles(node.Nodes, newDirectory + node.Text + @"\");
                 else if (node.Checked && node.BackColor != Color.Empty)
                     try {
-                        File.Move(node.Name, newDirectory + node.Text);
+                        //The file gets renamed before the folder. Use the current file path, and just rename it
+                        File.Move(node.Name, Path.GetDirectoryName(node.Name) + @"\" + node.Text);
                     } catch (Exception e) {
                         MessageBox.Show("Unable to rename/move file\r\n" + node.Name + "\r\n\r\n\r\n" + e.ToString());
                         return false;
@@ -794,6 +817,48 @@ namespace File_Manager {
             return string.Join(space, strings);
         }
 
+        public string EnglishTitleText(string s) {
+            TextInfo ti = new CultureInfo("en-US", false).TextInfo;
+            s = ti.ToTitleCase(s);
+            s = s.Replace(" A ", " a ");
+            s = s.Replace(" Also ", " also ");
+            s = s.Replace(" An ", " an ");
+            s = s.Replace(" And ", " and ");
+            s = s.Replace(" As ", " as ");
+            s = s.Replace(" At ", " at ");
+            s = s.Replace(" Be ", " be ");
+            s = s.Replace(" But ", " but ");
+            s = s.Replace(" By ", " by ");
+            s = s.Replace(" For ", " for ");
+            s = s.Replace(" From ", " from ");
+            s = s.Replace(" In ", " in ");
+            s = s.Replace(" Into ", " into ");
+            s = s.Replace(" Has ", " has ");
+            s = s.Replace(" Had ", " had ");
+            s = s.Replace(" Is ", " is ");
+            s = s.Replace(" Nor ", " nor ");
+            s = s.Replace(" Not ", " not ");
+            s = s.Replace(" Of ", " of ");
+            s = s.Replace(" Off ", " off ");
+            s = s.Replace(" On ", " on ");
+            s = s.Replace(" Onto ", " onto ");
+            s = s.Replace(" Or ", " or ");
+            s = s.Replace(" O'c ", " O'C ");
+            s = s.Replace(" Over ", " over ");
+            s = s.Replace(" So ", " so ");
+            s = s.Replace(" To ", " to ");
+            s = s.Replace(" That ", " that ");
+            s = s.Replace(" This ", " this ");
+            s = s.Replace(" Thus ", " thus ");
+            s = s.Replace(" The ", " the ");
+            s = s.Replace(" Too ", " too ");
+            s = s.Replace(" When ", " when ");
+            s = s.Replace(" With ", " with ");
+            s = s.Replace(" Up ", " up ");
+            s = s.Replace(" Yet ", " yet ");
+            return s;
+        }
+
         public string RemoveJunk(string s) {
             //this will remove common junk text found in video file names
             //It will also remove the filetype, so be sure to run GetFileType() and save it first!!
@@ -805,19 +870,15 @@ namespace File_Manager {
             string startingSpace = @"^( |\.|\-|_)";
             Regex rgx = new Regex(filetype);
             Match fileType = rgx.Match(s);
-            result = rgx.Replace(result, "");
-
+            //replace the filetype with a period. This is used for filters than check if there is a whitespace after a match
+            result = rgx.Replace(result, ".");
+            //Apply non-filters then filters
             string[] nonFilters = ApplyNonFilters(ref result);
             ApplyFilters(ref result);
-
-
             if (settings.RemoveBrackets) {
                 result = RemoveBracketJunk(result);
             }
-
-            //these ones should be last
-            rgx = new Regex(leftoverSpaces);
-            result =  CleanSpaces(rgx.Replace(result, settings.TV.SpaceOption),settings.TV.SpaceOption);
+            //reinsert non-filters 
             if (nonFilters.Length > 0) {
                 for (int i = 0; i < nonFilters.Length; i++) {
                     rgx = new Regex("<" + i.ToString() + ">");
@@ -830,12 +891,19 @@ namespace File_Manager {
                     result = rgx.Replace(result, settings.TV.SpaceOption);
                 }
             }
+            //Remove any leftover brackets
             rgx = new Regex(leftoverBrackets);
             result = rgx.Replace(result, "");
+            //Convert to Title Text format, then Clean spaces after applying junk filter
+            rgx = new Regex(leftoverSpaces);
+            result = CleanSpaces(rgx.Replace(result, settings.TV.SpaceOption), " ");
+            result = EnglishTitleText(result);
+            result = CleanSpaces(rgx.Replace(result, settings.TV.SpaceOption), settings.TV.SpaceOption);
             rgx = new Regex(endingSpace);
             result = rgx.Replace(result, "");
             rgx = new Regex(startingSpace);
             result = rgx.Replace(result, "");
+            
             return result;
         }
 
@@ -1081,8 +1149,29 @@ namespace File_Manager {
         }
 
         private void TreeView2_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e) {
-            if (!editingNode)
+            var hitTest = treeView2.HitTest(e.Location);
+            bool onPlusMinus = hitTest.Location == TreeViewHitTestLocations.PlusMinus;
+            if (!editingNode && !onPlusMinus)
                 EditTree2Node();
+        }
+
+        private void TreeView2_BeforeExpand(object sender, TreeViewCancelEventArgs e) {
+            e.Cancel = preventExpandCollapse;
+            preventExpandCollapse = false;
+        }
+
+        private void TreeView2_BeforeCollapse(object sender, TreeViewCancelEventArgs e) {
+            e.Cancel = preventExpandCollapse;
+            preventExpandCollapse = false;
+        }
+
+        private void TreeView2_MouseDown(object sender, MouseEventArgs e) {
+            DateTime oldMouseDown = lastMouseDown;
+            lastMouseDown = DateTime.Now;
+            var hitTest = treeView2.HitTest(e.Location);
+            bool onPlusMinus = hitTest.Location == TreeViewHitTestLocations.PlusMinus;
+            int delta = (int)lastMouseDown.Subtract(oldMouseDown).TotalMilliseconds;
+            preventExpandCollapse = !onPlusMinus && (delta < SystemInformation.DoubleClickTime);
         }
 
         private void TreeView2_KeyDown(object sender, KeyEventArgs e) {
@@ -1099,6 +1188,8 @@ namespace File_Manager {
         }
 
         private void EditTree2Node() {
+            if (treeView2.SelectedNode == null)
+                return;
             editingNode = true;
             editNodeFileType = GetFileType(treeView2.SelectedNode.Text);
             treeView2.SelectedNode.BeginEdit();
