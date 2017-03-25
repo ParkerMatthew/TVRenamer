@@ -10,14 +10,22 @@ Current Features:
   a. The season number and title of the series is automatically detected
 3. Allow for editing of .mkv file meta-tags so that the title of the episode does not retain the junk text of the original file name.
 
+Coming Soon:
+
+1. Click and Drag abilities for moving files into new folders within the TreeView UI.
+2. If editing an mkv tag results in an error, have the error displayed at the end once all other tags are processed.
+3. Automatically edit/remove mkv tags when pressing "Aply All"
+
+
 Planned Features:
 
 1. Automatically look up title names for episodes using online resources such as IMDB or wikipedia
-2. Quick title meta-tag editing of .mp4, .avi, and other common video file types
-3. Click and Drag abilities for moving files into new folders withint he TreeView UI.
-4. If editing an mkv tag results in an error, have the error displayed at the end once all other tags are processed.
+2. Edit/remove meta tags of .mp4, .avi, and other common video file types
+3. Set a "Video folder" location to send video files to. For example, automatically send files from Downloads folder to Videos.
+
 
 Current Issues:
 
-1. Renaming and deleting folders and files at the same time will sometimes cause errors to occur. This is because The folders are renamed before the video files in some cases.
-2. Double clicking a folder to edit the name causes the folder to become collapsed in the UI. This is a standard feature of the default TreeView component.
+1. The program may incorrectly assume an episode formatted as "Ep ##" inside a folder named "Ep ##" is supposed to be Season ##
+2. The auto-file combiner (put episodes into season folders) does not work unless it is a single file in a single folder
+
