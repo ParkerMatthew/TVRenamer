@@ -14,7 +14,7 @@ Coming Soon:
 
 1. Click and Drag abilities for moving files into new folders within the TreeView UI.
 2. If editing an mkv tag results in an error, have the error displayed at the end once all other tags are processed.
-3. Automatically edit/remove mkv tags when pressing "Aply All"
+3. Automatically edit/remove mkv tags when pressing "Apply All"
 
 
 Planned Features:
