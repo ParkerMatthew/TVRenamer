@@ -55,6 +55,11 @@ namespace File_Manager {
             if (!installPath.EndsWith("\\"))
                 directory += "\\";
             //MessageBox.Show(directory + "\r\n" + installPath);
+            this.Shown += MainForm_Shown;
+        }
+
+        private void MainForm_Shown(object sender, EventArgs e) {
+            //this should allow the mainform to be shown even when processing many files at startup
             if (directory.Contains(installPath))
                 directory = "";
             else
@@ -150,8 +155,6 @@ namespace File_Manager {
             labelReplace.MouseClick += LabelReplace_MouseClick;
             QuickSettingsAddListeners();
         }
-
-        
 
         private void MainForm_Deactivate(object sender, EventArgs e) {
             treeView1.MouseEnter -= TreeView1_MouseEnter;
@@ -818,6 +821,9 @@ namespace File_Manager {
         }
 
         public string EnglishTitleText(string s) {
+            //Regex rgx = new Regex(@"( |\.|_|\-){2,}");
+            //s = CleanSpaces(rgx.Replace(s, settings.TV.SpaceOption), " ");
+            //This function works best when space option is set to " " instead of "." or "_" or "-"
             TextInfo ti = new CultureInfo("en-US", false).TextInfo;
             s = ti.ToTitleCase(s);
             s = s.Replace(" A ", " a ");
@@ -843,7 +849,7 @@ namespace File_Manager {
             s = s.Replace(" On ", " on ");
             s = s.Replace(" Onto ", " onto ");
             s = s.Replace(" Or ", " or ");
-            s = s.Replace(" O'c ", " O'C ");
+            s = s.Replace("O'c", "O'C");
             s = s.Replace(" Over ", " over ");
             s = s.Replace(" So ", " so ");
             s = s.Replace(" To ", " to ");
@@ -856,6 +862,17 @@ namespace File_Manager {
             s = s.Replace(" With ", " with ");
             s = s.Replace(" Up ", " up ");
             s = s.Replace(" Yet ", " yet ");
+            s = s.Replace("1St", "1st");
+            s = s.Replace("2Nd", "2nd");
+            s = s.Replace("3Rd", "3rd");
+            s = s.Replace("4Th", "4th");
+            s = s.Replace("5Th", "5th");
+            s = s.Replace("6Th", "6th");
+            s = s.Replace("7Th", "7th");
+            s = s.Replace("8Th", "8th");
+            s = s.Replace("9Th", "9th");
+            s = s.Replace("0Th", "0th");
+            //s = CleanSpaces(rgx.Replace(s, settings.TV.SpaceOption), settings.TV.SpaceOption);
             return s;
         }
 
@@ -878,6 +895,9 @@ namespace File_Manager {
             if (settings.RemoveBrackets) {
                 result = RemoveBracketJunk(result);
             }
+            //Clean spaces after applying junk filter, but before non-junk filter
+            rgx = new Regex(leftoverSpaces);
+            result = CleanSpaces(rgx.Replace(result, settings.TV.SpaceOption), settings.TV.SpaceOption);
             //reinsert non-filters 
             if (nonFilters.Length > 0) {
                 for (int i = 0; i < nonFilters.Length; i++) {
@@ -894,11 +914,6 @@ namespace File_Manager {
             //Remove any leftover brackets
             rgx = new Regex(leftoverBrackets);
             result = rgx.Replace(result, "");
-            //Convert to Title Text format, then Clean spaces after applying junk filter
-            rgx = new Regex(leftoverSpaces);
-            result = CleanSpaces(rgx.Replace(result, settings.TV.SpaceOption), " ");
-            result = EnglishTitleText(result);
-            result = CleanSpaces(rgx.Replace(result, settings.TV.SpaceOption), settings.TV.SpaceOption);
             rgx = new Regex(endingSpace);
             result = rgx.Replace(result, "");
             rgx = new Regex(startingSpace);
@@ -1071,6 +1086,297 @@ namespace File_Manager {
 
         #endregion
 
+        #region TV show stuff
+
+        private void RenameTVShows(TreeNodeCollection tv) {
+            if (tv.Count == 0) {
+                //A single child node
+                return;
+            }
+            foreach (TreeNode node in tv) {
+                //if (node.Nodes.Count > 1)
+                RenameEpisodes(node.Nodes);
+                RenameTVShows(node.Nodes);
+            }
+        }
+
+        private void RenameEpisodes(TreeNodeCollection episodes) {
+            //This function assumes it is given a list of episodes in a single TreeNodeCollection
+            //The old version of this function would find the commonString and uniqueString, but it turns out that is unneeded
+            int count = 0;
+            foreach (TreeNode n in episodes) {
+                //Only attempt to rename checkmarked non-directories
+                if (n.Checked && n.Nodes.Count == 0)
+                    count++;
+            }
+            if (count < 1) {
+                return;
+            }
+            string filetype = "";
+            string newText = "";
+            string eptxt = "";
+            string showName = "";
+            string seasonFolderText = "";
+            foreach (TreeNode ep in episodes) {
+                eptxt = ep.Text;
+                if (ep.Checked && ep.Nodes.Count == 0) {
+                    filetype = GetFileType(eptxt);
+                    if (filetype != "") {
+                        //ignore empty directories
+                        newText = RemoveJunk(eptxt);
+                        if (newText != "") {
+                            Regex rgx = new Regex(@"(s|S)(e|E)(a|A)(s|S)(o|O)(n|N)");
+                            Match match = rgx.Match(ep.Parent.Text);
+                            if (!match.Success && (newText != RemoveJunk(ep.Parent.Text)))
+                                showName = ep.Parent.Text;
+                            else if (ep.Parent.Parent != null)
+                                showName = ep.Parent.Parent.Text;
+                            else
+                                showName = "";
+                            string oldText = ep.Text;
+                            if (settings.TV.FormatEpisode) {
+                                if (newText != RemoveJunk(ep.Parent.Text))
+                                    seasonFolderText = ep.Parent.Text;
+                                else {
+                                    //Prevents "Ep 05" in folder "Ep 05" from becoming "S05E05"
+                                    MessageBox.Show(ep.Parent.Text + " = " + ep.Text);
+                                    seasonFolderText = "1"; 
+                                }
+                                    ep.Text = FormatEpisode(newText, seasonFolderText, showName) + filetype;
+                            } else
+                                ep.Text = newText + filetype;
+                            if (oldText != ep.Text)
+                                ep.BackColor = Color.LightGreen;
+                        }
+                    }
+                }
+            }
+        }
+
+        public string FormatEpisode(string episode, string seasonFromFolder, string showName) {
+            //Episode filenames can be broken into 3 parts
+            //{Series Name} + {Episode Number} + {Episode Title}
+            //After the junk is removed and the pattern for the show established, this function formats the episode in the preferred format
+            //assumes filetype is already removed
+            string ep = episode;
+
+            string episodeNumber = FormatEpisodeNumber(ref ep, seasonFromFolder);
+            string episodeShow = null;
+            string episodeTitle = null;
+
+            if (episodeNumber != null) {
+                episodeShow = ep.Before(episodeNumber).TrimEnd(whiteSpaces);
+                episodeTitle = ep.After(episodeNumber).TrimStart(whiteSpaces);
+                //MessageBox.Show("About to format " + ep + ".\nNumber = " + episodeNumber + ".\nShow = " + episodeShow + ".\nTile = " + episodeTitle);
+                //MessageBox.Show("ShowName Predicted to be\n<" + showName + ">");
+                //MessageBox.Show(episodeSeries + "\r\n" + episodeNumber + "\r\n" + episodeTitle);
+                //! if(settings...)
+                episodeShow = EnglishTitleText(episodeShow);
+                episodeTitle = EnglishTitleText(episodeTitle);
+                
+                ep = "";
+                if (settings.TV.UseSeries) {
+                    if ((settings.TV.ForceGuessSeries && showName != "") || (settings.TV.GuessSeries && (episodeShow == "" || episodeShow == null)))
+                        episodeShow = showName;
+                    ep += episodeShow + settings.TV.SeriesSeparator;
+                }
+                ep += episodeNumber;
+                if (settings.TV.UseTitle)
+                    ep += settings.TV.TitleSeparator + episodeTitle;
+                ep = ep.TrimStart(whiteSpaces).TrimEnd(whiteSpaces);
+            }
+            return ep;
+        }
+
+        public string FormatEpisodeNumber(ref string fullEpisodeText, string seasonFromFolder) {
+            //This will convert the numbering system in the episode to the preferred system
+            //returns the formatted episode number (such as S01E01) and modifies fullEdpisodeText to include the formatted ep number
+            string ep = fullEpisodeText;
+            string formatted = null;
+            const string replaceText = @"<>"; //This was chosen because these characters are not allowed in file names
+            Regex rgx = null;
+            Match match = FindEpisodeFormat(ep, ref rgx);
+            if (match == null)
+                return null;
+
+            if (match.Success) {
+                if (ep.Contains(replaceText)) {
+                    MessageBox.Show("Can not format episodes that contain \"<>\" in their filename");
+                    return null;
+                }
+                ep = rgx.Replace(ep, replaceText, 1); //only replace the first match, incase the title has some numbers in it
+                string[] n = SeparateNumbersFromEpisode(match.Value, seasonFromFolder);
+                if (n == null || n.Length < 2 || n.Length > 3) {
+                    MessageBox.Show("Something went wrong when trying to Format Episode Numbers.");
+                    return null;
+                }
+                if (!settings.TV.OnlyEpisode)
+                    formatted = settings.TV.Season + n[0] + settings.TV.Episode + n[1];
+                else
+                    formatted = settings.TV.Episode + n[1];
+                if (n.Length == 3)
+                    formatted += settings.TV.Double + n[2];
+                rgx = new Regex(replaceText);
+                ep = rgx.Replace(ep, formatted);
+                fullEpisodeText = ep;
+                return formatted;
+            }
+
+            return formatted;
+        }
+
+        public string[] SeparateNumbersFromEpisode(string mv, string season) {
+            //mv is the matched value found in FormatEpisodeNumber, such as S01E01
+            //MessageBox.Show("SeperateNumbersFromEpisode()\n" + mv + "\n" + season);
+            string sn = "1";
+            string en = null;
+            string[] n = null;
+            int i = 0;
+            //Here is where we check if "Season" is actually a season
+            int season_int;
+            if (Int32.TryParse(season, out season_int)) {
+                sn = season;
+            }
+            Regex rgx = new Regex(@"^(\D*)(\d+)(\D*)$");
+            Match seasonNumber = rgx.Match(season);
+            rgx = new Regex(@"\d+");
+            if (seasonNumber.Success) {
+                sn = rgx.Match(season).Value;
+            }
+            MatchCollection matches = rgx.Matches(mv);
+            
+            if (matches.Count == 0) {
+                MessageBox.Show("Match count is 0");
+                return null;//this shouldn't happen
+            }
+            if (matches.Count > 1) {
+                //this is the normal case, when numbers are separated nicely
+                n = new string[matches.Count];
+                foreach (Match m in matches) {
+                    if (i == 0)
+                        n[i] = FixLeadingZeroes(m.Value, settings.TV.SeasonDigits);
+                    else
+                        n[i] = FixLeadingZeroes(m.Value, settings.TV.EpisodeDigits);
+                    i++;
+                }
+            }
+            if (matches.Count == 1) {
+                //Here is when things get tricky, and we must take an educated guess
+                string number = rgx.Match(mv).Value;
+                switch (number.Length) {
+                    case 0:
+                        return null; //wat?
+                    case 1:
+                        sn = FixLeadingZeroes(sn, settings.TV.SeasonDigits);
+                        en = FixLeadingZeroes(number, settings.TV.EpisodeDigits);
+                        n = new string[2] { sn, en };
+                        break;
+                    case 2:
+                        //Best assumption is that there isn't a season number
+                        sn = FixLeadingZeroes(sn, settings.TV.SeasonDigits);
+                        en = FixLeadingZeroes(number, settings.TV.EpisodeDigits);
+                        n = new string[2] { sn, en };
+                        break;
+                    case 3:
+                        //Most likely in SEE format, but it could be just EEE
+                        sn = number.Substring(0, 1);
+                        en = number.Substring(1, 2);
+                        sn = FixLeadingZeroes(sn, settings.TV.SeasonDigits);
+                        en = FixLeadingZeroes(en, settings.TV.EpisodeDigits);
+                        n = new string[2] { sn, en };
+                        break;
+                    case 4:
+                        //most likely in SSEE format, but small chance of SEEE
+                        sn = number.Substring(0, 2);
+                        en = number.Substring(2, 2);
+                        sn = FixLeadingZeroes(sn, settings.TV.SeasonDigits);
+                        en = FixLeadingZeroes(en, settings.TV.EpisodeDigits);
+                        n = new string[2] { sn, en };
+                        break;
+                    default:
+                        //Assume it's in some format of SSEEE
+                        sn = number.Substring(0, number.Length / 2);
+                        en = number.Substring(number.Length / 2, (int)Math.Ceiling((double)number.Length / 2));
+                        sn = FixLeadingZeroes(sn, settings.TV.SeasonDigits);
+                        en = FixLeadingZeroes(en, settings.TV.EpisodeDigits);
+                        n = new string[2] { sn, en };
+                        break;
+                }
+            }
+            return n;
+        }
+
+        public static string FixLeadingZeroes(string s, int digits) {
+            string t = s;
+            while ((t.Length > digits) && t.StartsWith("0")) {
+                t = t.After("0");
+            }
+            while (t.Length < digits) {
+                t = "0" + t;
+            }
+            return t;
+        }
+
+        public static string FixLeadingZeroes(string s) {
+            return FixLeadingZeroes(s, 0);
+        }
+
+        public Match FindEpisodeFormat(string ep, ref Regex rgx) {
+            Match match;
+            /*
+            The episodeFormats look for a string that matches a common numbering system for TV episodes
+            [0] is for double episodes, such as S1E1E2, S01E01&E02, or Season 1 Episode 1 and 1
+            [1] is for S01E01 or ep101
+            [2] is for Season 01 Episode 01
+            [3] is for Ep 01 or episode 1 or E01 but not E 01
+            [4] is for 1x01, 01.01
+            [5] is for 101, 01
+            */
+            string[] episodeFormats = new string[6] {
+                @"((S|s)([EASONeason])*( |\.|-|_)?)?\d+([A-Z]|[a-z]| |\.|-|_)+\d+((([A-Z]|[a-z]| |\.|-|_|&|\+){1,3})|([ _\.\-ANDand]{3,5}))(e|E|x|X)?\d+",
+                @"(S|s|E|e)([A-Z]|[a-z])?\d+([A-Z]|[a-z]| |\.|-|_){0,3}\d+",
+                @"(S|s)(E|e)(a|A)(s|S)(o|O)(n|N)(| |\.|-|_)?\d+([A-Z]|[a-z]| |\.|-|_)*\d+",
+                @"[e|E](([a-z]|[A-Z])+[ |\-|\.|_]?)?\d+",
+                @"\d{1,2}([A-Z]|[a-z]|\.)\d{2}",
+                @"\d{1,3}"
+            };
+            for (int i = 0; i < episodeFormats.Length; i++) {
+                rgx = new Regex(episodeFormats[i]);
+                match = rgx.Match(ep);
+                if (match.Success) {
+                    //sometimes a number in the episode title can cause problems
+                    if (i == 0) {
+                        if (DoubleEpisodeFound(match.Value))
+                            return match;
+                        //else: look for a different match
+                    } else {
+                        return match;
+                    }
+                }
+            }
+            return null;
+        }
+
+        public bool DoubleEpisodeFound(string mv) {
+            Regex rgx = new Regex(@"\d+");
+            MatchCollection matches = rgx.Matches(mv);
+            if (matches.Count != 3)
+                return false;
+            int[] nums = new int[matches.Count];
+            int j = 0;
+            foreach (Match m in matches) {
+                nums[j] = Int32.Parse(m.Value);
+                j++;
+            }
+            if (nums[2] == nums[1] + 1)
+                return true;
+            return false;
+        }
+
+
+
+        #endregion
+
         #region treeview stuff
         public static TreeNode[] FindAllNodes(TreeNodeCollection tnc, string nodeText, bool useRegex) {
             List<TreeNode> nodeList = new List<TreeNode>();
@@ -1149,6 +1455,7 @@ namespace File_Manager {
         }
 
         private void TreeView2_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e) {
+            preventExpandCollapse = false; //This is to allow expanding immediately after editing
             var hitTest = treeView2.HitTest(e.Location);
             bool onPlusMinus = hitTest.Location == TreeViewHitTestLocations.PlusMinus;
             if (!editingNode && !onPlusMinus)
@@ -1501,273 +1808,7 @@ namespace File_Manager {
         #endregion
         #endregion
 
-        #region TV show stuff
-
-        private void RenameTVShows(TreeNodeCollection tv) {
-            if (tv.Count == 0) {
-                //A single child node
-                return;
-            }
-            foreach(TreeNode node in tv) {
-                //if (node.Nodes.Count > 1)
-                RenameEpisodes(node.Nodes);
-                RenameTVShows(node.Nodes);
-            }
-        }
-
-        private void RenameEpisodes(TreeNodeCollection episodes) {
-            //This function assumes it is given a list of episodes in a single TreeNodeCollection
-            //The old version of this function would find the commonString and uniqueString, but it turns out that is unneeded
-            int count = 0;
-            foreach (TreeNode n in episodes) {
-                //Only attempt to rename checkmarked non-directories
-                if (n.Checked && n.Nodes.Count == 0)
-                    count++;
-            }
-            if (count < 1) {
-                return;
-            }
-            string filetype = "";
-            string newText = "";
-            string eptxt = "";
-            string series = "";
-            foreach (TreeNode ep in episodes) {
-                eptxt = ep.Text;
-                if (ep.Checked && ep.Nodes.Count == 0) {
-                    filetype = GetFileType(eptxt);
-                    if (filetype != "") {
-                        //ignore empty directories
-                        newText = RemoveJunk(eptxt);
-                        if (newText != "") {
-                            Regex rgx = new Regex(@"(s|S)(e|E)(a|A)(s|S)(o|O)(n|N)");
-                            Match match = rgx.Match(ep.Parent.Text);
-                            if (!match.Success)
-                                series = ep.Parent.Text;
-                            else if (ep.Parent.Parent != null)
-                                series = ep.Parent.Parent.Text;
-                            else
-                                series = "";
-                            string oldText = ep.Text;
-                            if (settings.TV.FormatEpisode)
-                                ep.Text = FormatEpisode(newText, ep.Parent.Text, series) + filetype;
-                            else
-                                ep.Text = newText + filetype;
-                            if(oldText != ep.Text)
-                                ep.BackColor = Color.LightGreen;
-                        }
-                    }
-                }
-            }
-        }
-
-        public string FormatEpisode(string episode, string season, string series) {
-            //Episode filenames can be broken into 3 parts
-            //{Series Name} + {Episode Number} + {Episode Title}
-            //After the junk is removed and the pattern for the show established, this function formats the episode in the preferred format
-            //assumes filetype is already removed
-            string ep = episode;
-
-            string episodeNumber = FormatEpisodeNumber(ref ep, season);
-            string episodeSeries = null;
-            string episodeTitle = null;
-            if (episodeNumber != null) {
-                episodeSeries = ep.Before(episodeNumber).TrimEnd(whiteSpaces);
-                episodeTitle = ep.After(episodeNumber).TrimStart(whiteSpaces);
-                //MessageBox.Show(episodeSeries + "\r\n" + episodeNumber + "\r\n" + episodeTitle);
-                ep = "";
-                if (settings.TV.UseSeries) {
-                    if ((settings.TV.ForceGuessSeries && series != "") || (settings.TV.GuessSeries && (episodeSeries == "" || episodeSeries == null)))
-                        episodeSeries = series;
-                    ep += episodeSeries + settings.TV.SeriesSeparator;
-                }
-                ep += episodeNumber;
-                if (settings.TV.UseTitle)
-                    ep += settings.TV.TitleSeparator + episodeTitle;
-                ep = ep.TrimStart(whiteSpaces).TrimEnd(whiteSpaces);
-            }
-            return ep;
-        }
-
-        public string FormatEpisodeNumber(ref string fullEpisodeText, string season) {
-            //This will convert the numbering system in the episode to the preferred system
-            //returns the formatted episode number (such as S01E01) and modifies fullEdpisodeText to include the formatted ep number
-            string ep = fullEpisodeText;
-            string formatted = null;
-            const string replaceText = @"<>"; //This was chosen because these characters are not allowed in file names
-            Regex rgx = null;
-            Match match = FindEpisodeFormat(ep, ref rgx);
-            if (match == null)
-                return null;
-
-            if (match.Success) {
-                if (ep.Contains(replaceText)) {
-                    MessageBox.Show("Can not format episodes that contain \"<>\" in their filename");
-                    return null;
-                }
-                ep = rgx.Replace(ep, replaceText, 1); //only replace the first match, incase the title has some numbers in it
-                string[] n = SeparateNumbersFromEpisode(match.Value, season);
-                if (n == null || n.Length < 2 || n.Length > 3) {
-                    MessageBox.Show("Something went wrong when trying to Format Episode Numbers.");
-                    return null;
-                }
-                if(!settings.TV.OnlyEpisode)
-                    formatted = settings.TV.Season + n[0] + settings.TV.Episode + n[1];
-                else
-                    formatted = settings.TV.Episode + n[1];
-                if (n.Length == 3)
-                    formatted += settings.TV.Double + n[2];
-                rgx = new Regex(replaceText);
-                ep = rgx.Replace(ep, formatted);
-                fullEpisodeText = ep;
-                return formatted;
-            }
-
-            return formatted;
-        }
-
-        public string[] SeparateNumbersFromEpisode(string mv, string season) {
-            //mv is the matched value found in FormatEpisodeNumber, such as S01E01
-            
-            string sn = "1";
-            string en = null;
-            string[] n = null;
-            int i = 0;
-            Regex rgx = new Regex(@"\d+");
-            Match seasonNumber = rgx.Match(season);
-            if (seasonNumber.Success)
-                sn = seasonNumber.Value;
-            MatchCollection matches = rgx.Matches(mv);
-            if (matches.Count == 0)
-                return null;//this shouldn't happen
-            if (matches.Count > 1) {
-                //this is the normal case, when numbers are separated nicely
-                n = new string[matches.Count];
-                foreach (Match m in matches) {
-                    if(i == 0)
-                        n[i] = FixLeadingZeroes(m.Value,settings.TV.SeasonDigits);
-                    else
-                        n[i] = FixLeadingZeroes(m.Value, settings.TV.EpisodeDigits);
-                    i++;
-                }
-            }
-            if (matches.Count == 1) {
-                //Here is when things get tricky, and we must take an educated guess
-                string number = rgx.Match(mv).Value;
-                switch (number.Length) {
-                    case 0:
-                        return null; //wat?
-                    case 1:
-                        sn = FixLeadingZeroes(sn, settings.TV.SeasonDigits);
-                        en = FixLeadingZeroes(number, settings.TV.EpisodeDigits);
-                        n = new string[2] { sn, en};
-                        break;
-                    case 2:
-                        //Best assumption is that there isn't a season number
-                        sn = FixLeadingZeroes(sn, settings.TV.SeasonDigits);
-                        en = FixLeadingZeroes(number, settings.TV.EpisodeDigits);
-                        n = new string[2] { sn, en };
-                        break;
-                    case 3:
-                        //Most likely in SEE format, but it could be just EEE
-                        sn = number.Substring(0, 1);
-                        en = number.Substring(1, 2);
-                        sn = FixLeadingZeroes(sn, settings.TV.SeasonDigits);
-                        en = FixLeadingZeroes(en, settings.TV.EpisodeDigits);
-                        n = new string[2] { sn, en };
-                        break;
-                    case 4:
-                        //most likely in SSEE format, but small chance of SEEE
-                        sn = number.Substring(0, 2);
-                        en = number.Substring(2, 2);
-                        sn = FixLeadingZeroes(sn, settings.TV.SeasonDigits);
-                        en = FixLeadingZeroes(en, settings.TV.EpisodeDigits);
-                        n = new string[2] { sn,  en };
-                        break;
-                    default:
-                        //Assume it's in some format of SSEEE
-                        sn = number.Substring(0, number.Length / 2);
-                        en = number.Substring(number.Length / 2, (int)Math.Ceiling((double)number.Length / 2));
-                        sn = FixLeadingZeroes(sn, settings.TV.SeasonDigits);
-                        en = FixLeadingZeroes(en, settings.TV.EpisodeDigits);
-                        n = new string[2] { sn , en };
-                        break;
-                }
-            }
-            return n;
-        }
-
-        public static string FixLeadingZeroes(string s, int digits) {
-            string t = s;
-            while ((t.Length > digits) && t.StartsWith("0")) {
-                t = t.After("0");
-            }
-            while (t.Length < digits) {
-                t = "0" + t;
-            }
-            return t;
-        }
-
-        public static string FixLeadingZeroes(string s) {
-            return FixLeadingZeroes(s, 0);
-        }
-
-        public Match FindEpisodeFormat(string ep, ref Regex rgx) {
-            Match match;
-            /*
-            The episodeFormats look for a string that matches a common numbering system for TV episodes
-            [0] is for double episodes, such as S1E1E2, S01E01&E02, or Season 1 Episode 1 and 1
-            [1] is for common episodes1, such as S01E01 or ep101
-            [2] is for common episodes2, such as Season 01 Episode 01
-            [3] is for common episodes3, such as 1x01, 01.01
-            [4] is for common episodes4, such as Ep 01 or episode 1
-            [5] is for common episodes5, such as 101, 01
-            
-            */
-            string[] episodeFormats = new string[6] {
-                @"((S|s)([EASONeason])*( |\.|-|_)?)?\d+([A-Z]|[a-z]| |\.|-|_)+\d+((([A-Z]|[a-z]| |\.|-|_|&|\+){1,3})|([ _\.\-ANDand]{3,5}))(e|E|x|X)?\d+",
-                @"(S|s|E|e)([A-Z]|[a-z])?\d+([A-Z]|[a-z]| |\.|-|_){0,3}\d+",
-                @"(S|s)(E|e)(a|A)(s|S)(o|O)(n|N)(| |\.|-|_)?\d+([A-Z]|[a-z]| |\.|-|_)*\d+",
-                @"\d{1,2}([A-Z]|[a-z]|\.)\d{1,2}",
-                @"([e|E][p|P][a-z]*[A-Z]*[ |\-|\.|_]?)?\d+",
-                @"\d{1,3}"
-            };
-            for (int i = 0; i < episodeFormats.Length; i++) {
-                rgx = new Regex(episodeFormats[i]);
-                match = rgx.Match(ep);
-                if (match.Success) {
-                    //sometimes a number in the episode title can cause problems
-                    if (i == 0) {
-                        if (DoubleEpisodeFound(match.Value))
-                            return match;
-                        //else: look for a different match
-                    } else {
-                        return match;
-                    }
-
-                }
-            }
-            return null;
-        }
-
-        public bool DoubleEpisodeFound(string mv) {
-            Regex rgx = new Regex(@"\d+");
-            MatchCollection matches = rgx.Matches(mv);
-            if(matches.Count != 3)
-                return false;
-            int[] nums = new int[matches.Count];
-            int j = 0;
-            foreach(Match m in matches) {
-                nums[j] = Int32.Parse(m.Value);
-                j++;
-            }
-            if (nums[2] == nums[1]+1)
-                return true;
-            return false;
-        }
-
-
-
-        #endregion
+        
 
         
     }
