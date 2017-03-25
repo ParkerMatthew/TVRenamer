@@ -25,6 +25,5 @@ Planned Features:
 
 Current Issues:
 
-1. The program may incorrectly assume an episode formatted as "Ep ##" inside a folder named "Ep ##" is supposed to be Season ##
-2. The auto-file combiner (put episodes into season folders) does not work unless it is a single file in a single folder
+1. The auto-file combiner (put episodes into season folders) does not work unless it is a single file in a single folder
 
