@@ -663,19 +663,20 @@ namespace File_Manager {
             if (!directory.EndsWith("\\"))
                 directory += "\\";
             string rootDirectory = directory.Remove(directory.LastIndexOf(treeView2.Nodes[0].Text + "\\"), treeView2.Nodes[0].Text.Length + 1);
-            //string[] directories = FindNewDirectories(treeView1, treeView2.Nodes);
+            string[] newDirectories = FindNewDirectories(treeView1, treeView2.Nodes);
             string[] deletions = FindDeletedNodes(treeView1.Nodes, treeView2);
             if (!ApplyDeletesConfirm(deletions))
                 return;
-            //if (!ApplyCreateNewDirectories(directories))
-            //    return;
-            //Renames require folder names to be unchanged
-            if (!ApplyRenamesFiles(treeView2.Nodes, rootDirectory))
+            //New Directories need to be created before files can be renamed
+            if (!ApplyCreateNewDirectories(newDirectories))
                 return;
-            //Deletions require folder names to be unchanged
+            //File Renames need to be done before Folders are Renamed
+            if (!ApplyFileRenames(treeView2.Nodes, rootDirectory))
+                return;
+            //Deletions need to be done before Folders are Renamed
             if (!ApplyDeletes(deletions))
                 return;
-            if (!ApplyRenamesFolders(treeView2.Nodes, rootDirectory))
+            if (!ApplyFolderRenames(treeView2.Nodes, rootDirectory))
                 return;
         }
 
@@ -700,16 +701,15 @@ namespace File_Manager {
             return booly;
         }
 
-        private bool ApplyRenamesFolders(TreeNodeCollection tv2nodes, string newDirectory) {
+        private bool ApplyFolderRenames(TreeNodeCollection tv2nodes, string newDirectory) {
             if (!newDirectory.EndsWith(@"\")) {
-                MessageBox.Show(newDirectory + "\r\nDoes not end in \\");
-                return false;
+                newDirectory += @"\";
             }
             //ignore files and folders that aren't changed and checked
             bool booly = true;
             foreach (TreeNode node in tv2nodes) {
                 if (node.Nodes.Count > 0) {
-                    booly &= ApplyRenamesFolders(node.Nodes, newDirectory + node.Text + @"\");
+                    booly &= ApplyFolderRenames(node.Nodes, newDirectory + node.Text + @"\");
                     if (node.Checked && node.BackColor != Color.Empty && !Directory.Exists(newDirectory + node.Text)) {
                         try {
                             //MessageBox.Show("Attempting to rename folder.\r\nnewDirectory = " + newDirectory + "\r\nnode.Text = " + node.Text + "\r\nnode.Name = " + node.Name);
@@ -724,21 +724,28 @@ namespace File_Manager {
             return booly;
         }
 
-        private bool ApplyRenamesFiles(TreeNodeCollection tv2nodes, string newDirectory) {
+        private bool ApplyFileRenames(TreeNodeCollection tv2nodes, string newDirectory) {
             if (!newDirectory.EndsWith(@"\")) {
-                MessageBox.Show(newDirectory+"\r\nDoes not end in \\");
-                return false;
+                newDirectory += @"\";
             }
             //ignore folders that were renamed until files are moved/renamed
             //ignore unchecked and unchanged files
             bool booly = true;
             foreach(TreeNode node in tv2nodes) {
                 if (node.Nodes.Count > 0)
-                    booly &= ApplyRenamesFiles(node.Nodes, newDirectory + node.Text + @"\");
+                    booly &= ApplyFileRenames(node.Nodes, newDirectory + node.Text + @"\");
                 else if (node.Checked && node.BackColor != Color.Empty)
                     try {
-                        //The file gets renamed before the folder. Use the current file path, and just rename it
-                        File.Move(node.Name, Path.GetDirectoryName(node.Name) + @"\" + node.Text);
+                        string treePath = Path.GetDirectoryName(node.Name);
+                        if (!treePath.EndsWith(@"\"))
+                            treePath += @"\";
+                        //case 1: The parent folder exists (pre-existing or newly created). Goal: Rename the file and move it to the folder. This ensures files are moved to newly created folders
+                        //case 2: The parent folder doesn't exist (has been renamed). Goal: Do not attempt to move it to the new folder, the folder will be renamed later
+                        if (Directory.Exists(newDirectory.Substring(0,newDirectory.Length-1))) {
+                            File.Move(node.Name, newDirectory + node.Text);
+                        } else {
+                            File.Move(node.Name, treePath + node.Text);
+                        }
                     } catch (Exception e) {
                         MessageBox.Show("Unable to rename/move file\r\n" + node.Name + "\r\n\r\n\r\n" + e.ToString());
                         return false;
@@ -749,12 +756,13 @@ namespace File_Manager {
 
         private bool ApplyCreateNewDirectories(string[] directories) {
             for(int i=0; i<directories.Length; i++) {
-                try {
-                    Directory.CreateDirectory(directories[i]);
-                } 
-                catch (Exception e) {
-                    MessageBox.Show("Could not create directory "+directories[i]+"\r\n"+e.ToString());
-                    return false;
+                if (!Directory.Exists(directories[i])) {
+                    try {
+                        Directory.CreateDirectory(directories[i]);
+                    } catch (Exception e) {
+                        MessageBox.Show("Could not create directory " + directories[i] + "\r\n" + e.ToString());
+                        return false;
+                    }
                 }
             }
             return true;
@@ -802,10 +810,8 @@ namespace File_Manager {
                 if(alreadyExists.Length == 0) {
                     directories.Add(node.Name);
                 }
-
             }
             return directories.ToArray();
-
         }
         #endregion
 
@@ -1139,7 +1145,7 @@ namespace File_Manager {
                                     seasonFolderText = ep.Parent.Text;
                                 else {
                                     //Prevents "Ep 05" in folder "Ep 05" from becoming "S05E05"
-                                    MessageBox.Show(ep.Parent.Text + " = " + ep.Text);
+                                    //MessageBox.Show(ep.Parent.Text + " = " + ep.Text);
                                     seasonFolderText = "1"; 
                                 }
                                     ep.Text = FormatEpisode(newText, seasonFolderText, showName) + filetype;
@@ -1246,7 +1252,7 @@ namespace File_Manager {
             MatchCollection matches = rgx.Matches(mv);
             
             if (matches.Count == 0) {
-                MessageBox.Show("Match count is 0");
+                MessageBox.Show("Match count is 0, this shouldn't happen");
                 return null;//this shouldn't happen
             }
             if (matches.Count > 1) {
@@ -1664,7 +1670,7 @@ namespace File_Manager {
 
             if (node.Parent == null) {
                 //this is a root of the tree, which is the case if only 1 folder is open
-                MessageBox.Show("Root level folder combine not yet implemented");
+                //!MessageBox.Show("Root level folder combine not yet implemented");
                 return false;
             } else {
                 string showKey = directory;
@@ -1684,6 +1690,7 @@ namespace File_Manager {
                     if (foundSeason.Count() == 1) {
                         //Season folder already exists
                         node.Remove();
+                        childnode.BackColor = Color.Aquamarine;
                         childnode.Remove();
                         foundSeason[0].Nodes.Add(childnode);
                         foundSeason[0].Expand();
@@ -1691,7 +1698,9 @@ namespace File_Manager {
                         //Season folder does not exist
                         node.Text = seasonText;
                         node.Name = seasonKey;
-                        node.BackColor = Color.LightGreen;
+                        //!
+                        node.BackColor = Color.Aquamarine;
+                        childnode.BackColor = Color.Aquamarine;
                         node.Remove();
                         foundShow[0].Nodes.Add(node);
                         foundShow[0].Expand();
@@ -1702,8 +1711,9 @@ namespace File_Manager {
                     node.Text = seasonText;
                     node.Name = seasonKey;
                     ShowNode.ContextMenuStrip = contextMenuStripNode;
-                    ShowNode.BackColor = Color.LightGreen;
-                    node.BackColor = Color.LightGreen;
+                    ShowNode.BackColor = Color.Aquamarine;
+                    node.BackColor = Color.Aquamarine;
+                    childnode.BackColor = Color.Aquamarine;
                     ShowNode.Name = showKey;
                     node.Parent.Nodes.Add(ShowNode);
                     node.Remove();
