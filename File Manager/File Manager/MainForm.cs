@@ -1332,17 +1332,17 @@ namespace File_Manager {
             /*
             The episodeFormats look for a string that matches a common numbering system for TV episodes
             [0] is for double episodes, such as S1E1E2, S01E01&E02, or Season 1 Episode 1 and 1
-            [1] is for S01E01 or ep101
+            [1] is for S01E01, ep101, Ep 01, or e 01 ... but NOT showname 01 (notice the E at the end)
             [2] is for Season 01 Episode 01
-            [3] is for Ep 01 or episode 1 or E01 but not E 01
+            [3] is for episode 1
             [4] is for 1x01, 01.01
-            [5] is for 101, 01
+            [5] is for 101, 01, 1
             */
             string[] episodeFormats = new string[6] {
-                @"((S|s)([EASONeason])*( |\.|-|_)?)?\d+([A-Z]|[a-z]| |\.|-|_)+\d+((([A-Z]|[a-z]| |\.|-|_|&|\+){1,3})|([ _\.\-ANDand]{3,5}))(e|E|x|X)?\d+",
-                @"(S|s|E|e)([A-Z]|[a-z])?\d+([A-Z]|[a-z]| |\.|-|_){0,3}\d+",
-                @"(S|s)(E|e)(a|A)(s|S)(o|O)(n|N)(| |\.|-|_)?\d+([A-Z]|[a-z]| |\.|-|_)*\d+",
-                @"[e|E](([a-z]|[A-Z])+[ |\-|\.|_]?)?\d+",
+                @"((S|s)?[EASONeason]*( |\.|-|_)?\d+( |\.|-|_)?)?(E|e|X|x)[EPISODXepisodx]*( |\.|-|_)?\d+( |\.|-|_)?((&|(( |\.|-|_|&|\+){3})|([ _\.\-ANDand]{3,5}))|[EPISODXepisodx]+)[ _\.\-EPISODXepisodx]*\d+",
+                @"((s|S)\d+(e|E)\d+)|((?<=[ |\-|\.|_])(e|E)(p|P)?( |\.|-|_)?\d{2,})",
+                @"(S|s)(E|e)(a|A)(s|S)(o|O)(n|N)( |\.|-|_)?\d+[ _\.\-EPISODepisod]*\d+",
+                @"(e|E)(p|P)(i|I)(s|S)(o|O)(d|D)(e|E)( |\.|-|_)?\d+",
                 @"\d{1,2}([A-Z]|[a-z]|\.)\d{2}",
                 @"\d{1,3}"
             };
