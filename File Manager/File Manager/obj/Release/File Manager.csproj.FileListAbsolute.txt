@@ -13,5 +13,4 @@ T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File M
 T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File Manager.application
 T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File Manager.exe
 T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File Manager.pdb
-T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File Manager.csprojResolveAssemblyReference.cache
 T:\Documents\Visual Studio\Projects\File Manager\File Manager\obj\Release\File_Manager.MKVPropEdit.resources

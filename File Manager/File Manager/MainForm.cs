@@ -1664,18 +1664,21 @@ namespace File_Manager {
             Match episodeFormat = FindEpisodeFormat(commonText, ref rgx);
             if (episodeFormat == null || !episodeFormat.Success)
                 return false;
-            string showText = episodeText.Before(episodeFormat.Value).Trim(whiteSpaces);
-            string[] episodeNumbers = SeparateNumbersFromEpisode(episodeFormat.Value, "1");
-            string seasonNumber = episodeNumbers[0];
+            string showTitle = EnglishTitleText(episodeText.Before(episodeFormat.Value).Trim(whiteSpaces));
+            //season number does not matter when calling this function. This function is being used to reverse engineer the season number.
+            string[] seasonAndEpisode = SeparateNumbersFromEpisode(episodeFormat.Value, "1");
+            string seasonNumber = seasonAndEpisode[0];
 
             if (node.Parent == null) {
                 //this is a root of the tree, which is the case if only 1 folder is open
                 //!MessageBox.Show("Root level folder combine not yet implemented");
                 return false;
             } else {
+                ///TODO: ToTitleText
                 string showKey = directory;
-                if (!directory.Contains(showText))
-                    showKey += "\\" + showText;
+                string directoryAsTitle = EnglishTitleText(directory.After("\\"));
+                if (!directoryAsTitle.Contains(showTitle))
+                    showKey += "\\" + showTitle;
                 string seasonText = "Season " + seasonNumber;
                 string seasonKey = showKey + "\\" + seasonText;
                 TreeNode[] foundShow = tv.Nodes.Find(showKey, true);
@@ -1705,9 +1708,13 @@ namespace File_Manager {
                         foundShow[0].Nodes.Add(node);
                         foundShow[0].Expand();
                     }
+                    else {
+                        MessageBox.Show("FolderCombine() Error: Expected at most 1 folder containing the word 'Season', but found " + foundSeason.Count());
+                        throw new Exception("Fatal error");
+                    }
                 } else if (foundShow.Count() == 0) {
                     //show folder does not exist
-                    TreeNode ShowNode = new TreeNode(showText);
+                    TreeNode ShowNode = new TreeNode(showTitle);
                     node.Text = seasonText;
                     node.Name = seasonKey;
                     ShowNode.ContextMenuStrip = contextMenuStripNode;
